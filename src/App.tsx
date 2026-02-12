@@ -21,20 +21,31 @@ import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 
+console.log("📦 App.tsx: Iniciando...");
+
 const queryClient = new QueryClient();
 
 function GuardedLayout() {
+  console.log("🔒 GuardedLayout: Renderizando...");
   const { user, loading: authLoading } = useAuth();
   const { loading: wsLoading, currentWorkspace } = useWorkspace();
 
-  if (authLoading) return null;
+  console.log("🔒 GuardedLayout: authLoading =", authLoading, "user =", !!user);
+  console.log("🔒 GuardedLayout: wsLoading =", wsLoading, "workspace =", currentWorkspace?.id);
+
+  if (authLoading) {
+    console.log("⏳ GuardedLayout: Aguardando auth...");
+    return null;
+  }
 
   if (!user) {
+    console.log("🚫 GuardedLayout: Sem usuário, redirecionando para /login");
     return <Navigate to="/login" replace />;
   }
 
   // segura até ter workspace id válido
   if (wsLoading || !currentWorkspace?.id) {
+    console.log("⏳ GuardedLayout: Aguardando workspace...");
     return (
       <div className="min-h-screen flex items-center justify-center text-muted-foreground">
         Carregando workspace...
@@ -42,42 +53,49 @@ function GuardedLayout() {
     );
   }
 
+  console.log("✅ GuardedLayout: Renderizando MainLayout");
   return <MainLayout />;
 }
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <WorkspaceProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<Login />} />
+const App = () => {
+  console.log("🎨 App: Renderizando...");
+  
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthProvider>
+          <WorkspaceProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/login" element={<Login />} />
 
-              <Route path="/" element={<Navigate to="/overview" replace />} />
+                <Route path="/" element={<Navigate to="/overview" replace />} />
 
-              <Route element={<GuardedLayout />}>
-                <Route path="/overview" element={<Overview />} />
-                <Route path="/clients" element={<Clients />} />
-                <Route path="/instances" element={<Instances />} />
-                <Route path="/inbox" element={<Inbox />} />
-                <Route path="/leads" element={<Leads />} />
-                <Route path="/pipeline" element={<Pipeline />} />
-                <Route path="/follow-ups" element={<FollowUps />} />
-                <Route path="/converted" element={<Converted />} />
-                <Route path="/bot" element={<Bot />} />
-                <Route path="/settings" element={<Settings />} />
-              </Route>
+                <Route element={<GuardedLayout />}>
+                  <Route path="/overview" element={<Overview />} />
+                  <Route path="/clients" element={<Clients />} />
+                  <Route path="/instances" element={<Instances />} />
+                  <Route path="/inbox" element={<Inbox />} />
+                  <Route path="/leads" element={<Leads />} />
+                  <Route path="/pipeline" element={<Pipeline />} />
+                  <Route path="/follow-ups" element={<FollowUps />} />
+                  <Route path="/converted" element={<Converted />} />
+                  <Route path="/bot" element={<Bot />} />
+                  <Route path="/settings" element={<Settings />} />
+                </Route>
 
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </WorkspaceProvider>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </WorkspaceProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
+
+console.log("✅ App.tsx: Definido");
 
 export default App;

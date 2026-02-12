@@ -2,6 +2,8 @@ import React, { createContext, useContext, useEffect, useMemo, useState, ReactNo
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 
+console.log("📦 AuthContext: Carregando...");
+
 type AuthContextType = {
   loading: boolean;
   session: Session | null;
@@ -13,25 +15,39 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  console.log("🔐 AuthProvider: Iniciando...");
   const [loading, setLoading] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
 
   useEffect(() => {
+    console.log("🔐 AuthProvider: useEffect iniciado");
     let mounted = true;
 
     (async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!mounted) return;
-      setSession(data.session ?? null);
-      setLoading(false);
+      try {
+        console.log("🔐 AuthProvider: Buscando sessão...");
+        const { data } = await supabase.auth.getSession();
+        if (!mounted) return;
+        console.log("🔐 AuthProvider: Sessão obtida:", !!data.session);
+        setSession(data.session ?? null);
+        setLoading(false);
+      } catch (error) {
+        console.error("❌ AuthProvider: Erro ao buscar sessão:", error);
+        if (mounted) {
+          setSession(null);
+          setLoading(false);
+        }
+      }
     })();
 
     const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      console.log("🔐 AuthProvider: Auth state changed:", !!newSession);
       setSession(newSession ?? null);
       setLoading(false);
     });
 
     return () => {
+      console.log("🔐 AuthProvider: Cleanup");
       mounted = false;
       sub.subscription.unsubscribe();
     };
@@ -53,6 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [loading, session]);
 
+  console.log("🔐 AuthProvider: Renderizando, loading =", loading, "user =", !!value.user);
+
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
@@ -61,3 +79,5 @@ export function useAuth() {
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 }
+
+console.log("✅ AuthContext: Definido");

@@ -4,132 +4,36 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
-class ErrorBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean; error?: any }
-> {
-  constructor(props: any) {
-    super(props);
-    this.state = { hasError: false };
-  }
+// Log para verificar se o arquivo carrega
+console.log("🚀 main.tsx carregado");
 
-  static getDerivedStateFromError(error: any) {
-    return { hasError: true, error };
-  }
-
-  componentDidCatch(error: any, info: any) {
-    console.error("APP_CRASH:", error);
-    console.error("APP_CRASH_INFO:", info);
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div
-          style={{
-            padding: 16,
-            fontFamily:
-              "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-          }}
-        >
-          <h1 style={{ fontSize: 16, marginBottom: 8 }}>App crashou (JS)</h1>
-          <pre style={{ whiteSpace: "pre-wrap", opacity: 0.9 }}>
-            {String(
-              this.state.error?.message ||
-                this.state.error ||
-                "unknown_error"
-            )}
-          </pre>
-          <p style={{ marginTop: 12, opacity: 0.7 }}>
-            Abra o Console (F12) e copie a linha <b>APP_CRASH</b>.
-          </p>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
-
-function DebugScreen() {
-  const env = {
-    supabaseUrl: import.meta.env.VITE_SUPABASE_URL
-      ? "✅ VITE_SUPABASE_URL"
-      : "❌ VITE_SUPABASE_URL",
-    supabaseKey: import.meta.env.VITE_SUPABASE_ANON_KEY
-      ? "✅ VITE_SUPABASE_ANON_KEY"
-      : "❌ VITE_SUPABASE_ANON_KEY",
-    apiBase: import.meta.env.VITE_API_BASE_URL
-      ? "✅ VITE_API_BASE_URL"
-      : "⚠️ VITE_API_BASE_URL",
-    workspaceId: import.meta.env.VITE_WORKSPACE_ID
-      ? "✅ VITE_WORKSPACE_ID"
-      : "⚠️ VITE_WORKSPACE_ID",
-  };
-
-  const allGood = env.supabaseUrl.includes("✅") && env.supabaseKey.includes("✅");
-
-  return (
-    <div
-      style={{
-        padding: 24,
-        fontFamily: "system-ui, -apple-system, sans-serif",
-        background: "#0a0a0a",
-        color: "#fff",
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-      }}
-    >
-      <h1 style={{ marginBottom: 24, fontSize: 28 }}>🔧 Status da Inicialização</h1>
-
-      <div style={{ background: "#1a1a1a", padding: 16, borderRadius: 8, marginBottom: 24 }}>
-        <h2 style={{ fontSize: 14, marginBottom: 12, color: "#aaa" }}>Variáveis de Ambiente:</h2>
-        {Object.entries(env).map(([key, value]) => (
-          <div key={key} style={{ padding: 8, borderBottom: "1px solid #333" }}>
-            <code style={{ fontSize: 12 }}>{value}</code>
-          </div>
-        ))}
+// Verificar se root existe
+const rootElement = document.getElementById("root");
+if (!rootElement) {
+  console.error("❌ Elemento #root não encontrado!");
+  document.body.innerHTML = '<div style="padding: 20px; color: red;">ERRO: Elemento #root não encontrado no DOM</div>';
+} else {
+  console.log("✅ Elemento #root encontrado");
+  
+  try {
+    console.log("📦 Criando ReactDOM root...");
+    const root = ReactDOM.createRoot(rootElement);
+    
+    console.log("🎨 Renderizando App...");
+    root.render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    );
+    console.log("✅ App renderizado com sucesso!");
+  } catch (error) {
+    console.error("❌ ERRO ao renderizar:", error);
+    document.body.innerHTML = `
+      <div style="padding: 20px; font-family: monospace; background: #1a1a1a; color: #fff;">
+        <h1 style="color: #ff5555;">❌ Erro ao renderizar App</h1>
+        <pre style="background: #000; padding: 10px; overflow: auto;">${error}</pre>
+        <p style="margin-top: 20px; color: #888;">Abra o Console (F12) para mais detalhes</p>
       </div>
-
-      {!allGood ? (
-        <div style={{ background: "#3d2d2d", padding: 16, borderRadius: 8 }}>
-          <h2 style={{ fontSize: 14, marginBottom: 8, color: "#ff9999" }}>
-            ⚠️ Problemas Encontrados:
-          </h2>
-          <ul style={{ margin: 0, paddingLeft: 20, fontSize: 12, lineHeight: 1.8 }}>
-            {!env.supabaseUrl.includes("✅") && <li>VITE_SUPABASE_URL não está configurada na Vercel</li>}
-            {!env.supabaseKey.includes("✅") && <li>VITE_SUPABASE_ANON_KEY não está configurada na Vercel</li>}
-          </ul>
-        </div>
-      ) : (
-        <div style={{ background: "#2d3d2d", padding: 16, borderRadius: 8 }}>
-          <p style={{ color: "#99ff99", fontSize: 14 }}>
-            ✅ Variáveis OK! Carregando a app...
-          </p>
-        </div>
-      )}
-    </div>
-  );
+    `;
+  }
 }
-
-function Boot() {
-  const [showDebug, setShowDebug] = React.useState(true);
-
-  React.useEffect(() => {
-    const t = window.setTimeout(() => setShowDebug(false), 1500);
-    return () => window.clearTimeout(t);
-  }, []);
-
-  return (
-    <ErrorBoundary>
-      {showDebug ? <DebugScreen /> : <App />}
-    </ErrorBoundary>
-  );
-}
-
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <Boot />
-  </React.StrictMode>
-);
